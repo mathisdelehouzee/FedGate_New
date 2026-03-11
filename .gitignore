@@ -1,8 +1,7 @@
-# Heavy local artifacts not needed for paper sharing
-artifacts/s0_iid/mri_cache/
-artifacts/s1_non_iid/mri_cache/
-artifacts/s2_non_congruent_iid/mri_cache/
-artifacts/s3_non_congruent_non_iid/mri_cache/
+# Heavy local artifacts regenerated from raw data
+artifacts/shared_mri_cache/
+artifacts/*/mri_cache/
+artifacts/*/splits/
 
 # Heavy dataset payload now colocated under fedgate_full/data
 data/ADNIDenoise/
@@ -14,6 +13,10 @@ data/MixedDB/*
 
 # Local run logs
 logs/
+*.log
+*.diagnostics.log
+run_config/
+results/
 
 # Python/cache noise
 __pycache__/

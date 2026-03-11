@@ -1,2 +1,0 @@
-method,scenario,seed,loss,auroc,auprc,acc,f1,threshold,is_personalized
-fedavg_mean,FR_S0_congruent_iid,7,0.25431421769554363,0.9328746238716148,0.8114727861879758,0.8853247794707297,0.72552783109405,0.295,False

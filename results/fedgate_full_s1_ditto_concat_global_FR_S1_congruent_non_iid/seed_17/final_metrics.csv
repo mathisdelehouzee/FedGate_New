@@ -1,2 +1,0 @@
-method,scenario,seed,loss,auroc,auprc,acc,f1,threshold,is_personalized,variant
-ditto_concat_global,FR_S1_congruent_non_iid,17,2.871992793576471,0.898655967903711,0.7252005453293505,0.7995188452285485,0.0,0.49999999999999994,False,global

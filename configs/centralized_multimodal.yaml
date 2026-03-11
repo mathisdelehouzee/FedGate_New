@@ -1,0 +1,48 @@
+experiment: "centralized_multimodal_paper_like"
+
+paths:
+  results_root: "../results"
+
+data:
+  csv: "../data/cbms_dataset.csv"
+  data_root: "../data/MixedDB"
+  mri_shape: [96, 96, 96]
+  mri_cache:
+    enabled: true
+    dir: "../artifacts/shared_mri_cache/shape_96x96x96"
+    max_items: 1024
+
+seeds: [42, 123, 456]
+
+model:
+  hidden_dim: 128
+  dropout: 0.1
+
+runtime:
+  allow_tf32: true
+  cudnn_benchmark: true
+  float32_matmul_precision: "high"
+
+centralized:
+  output_name: "centralized_multimodal_paper_like"
+  mode: "multimodal"
+  device: "auto"
+  epochs: 100
+  batch_size: 4
+  lr: 0.00002
+  weight_decay: 0.01
+  layer_decay: 0.75
+  disable_llrd: false
+  warmup_epochs: 5
+  min_epochs: 40
+  patience: 20
+  folds: 5
+  num_workers: 2
+  use_tta: false
+  limit_rows: 0
+  verbose: true
+  progress_bar: false
+  log_interval: 1
+  train_sources: []
+  eval_sources: []
+  save_checkpoints: true

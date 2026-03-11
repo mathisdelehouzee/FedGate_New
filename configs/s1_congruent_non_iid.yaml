@@ -27,7 +27,7 @@ data:
   mri_shape: [96, 96, 96]
   mri_cache:
     enabled: true
-    dir: "../artifacts/s1_non_iid/mri_cache"
+    dir: "../artifacts/shared_mri_cache/shape_96x96x96"
 
 seeds: [7, 11, 17]
 pretrain_seed: 7
@@ -101,7 +101,7 @@ federated:
   num_server_rounds: 100
   fraction_fit: 1.0
   local_epochs: 1
-  fedgate_share: "backbone"
+  fedgate_share: "encoders"
   batch_size: 80
   lr: 0.0001
   weight_decay: 0.0001
