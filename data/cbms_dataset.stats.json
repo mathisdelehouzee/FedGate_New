@@ -1,0 +1,14 @@
+{
+  "counts": {
+    "ADNI_total": 903,
+    "ADNI_CN": 424,
+    "ADNI_AD_trajectory": 479,
+    "OASIS_total": 1199,
+    "OASIS_CN": 980,
+    "OASIS_AD_trajectory": 219,
+    "NACC_total": 4132,
+    "NACC_AD_trajectory": 551,
+    "NACC_CN": 3581
+  },
+  "total_rows_written": 6234
+}

@@ -597,7 +597,7 @@ Il est tres faible. Les gates ajoutent seulement quelques scalaires par client e
 ### Fichiers de configuration
 
 - `configs/*.yaml`
-- `artifacts_*/splits/splits_report.json`
+- `artifacts/*/splits/splits_report.json`
 
 ---
 

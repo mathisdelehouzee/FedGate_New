@@ -25,26 +25,26 @@ SCENARIOS = [
     {
         "slug": "s0",
         "config": ROOT / "fedgate_full" / "configs" / "s0_congruent_iid.yaml",
-        "manifest": ROOT / "fedgate_full" / "artifacts_s0_iid" / "splits" / "splits_manifest.json",
-        "report": ROOT / "fedgate_full" / "artifacts_s0_iid" / "splits" / "splits_report.json",
+        "manifest": ROOT / "fedgate_full" / "artifacts" / "s0_iid" / "splits" / "splits_manifest.json",
+        "report": ROOT / "fedgate_full" / "artifacts" / "s0_iid" / "splits" / "splits_report.json",
     },
     {
         "slug": "s1",
         "config": ROOT / "fedgate_full" / "configs" / "s1_congruent_non_iid.yaml",
-        "manifest": ROOT / "fedgate_full" / "artifacts_s1_non_iid" / "splits" / "splits_manifest.json",
-        "report": ROOT / "fedgate_full" / "artifacts_s1_non_iid" / "splits" / "splits_report.json",
+        "manifest": ROOT / "fedgate_full" / "artifacts" / "s1_non_iid" / "splits" / "splits_manifest.json",
+        "report": ROOT / "fedgate_full" / "artifacts" / "s1_non_iid" / "splits" / "splits_report.json",
     },
     {
         "slug": "s2",
         "config": ROOT / "fedgate_full" / "configs" / "s2_non_congruent_iid.yaml",
-        "manifest": ROOT / "fedgate_full" / "artifacts_s2_non_congruent_iid" / "splits" / "splits_manifest.json",
-        "report": ROOT / "fedgate_full" / "artifacts_s2_non_congruent_iid" / "splits" / "splits_report.json",
+        "manifest": ROOT / "fedgate_full" / "artifacts" / "s2_non_congruent_iid" / "splits" / "splits_manifest.json",
+        "report": ROOT / "fedgate_full" / "artifacts" / "s2_non_congruent_iid" / "splits" / "splits_report.json",
     },
     {
         "slug": "s3",
         "config": ROOT / "fedgate_full" / "configs" / "s3_non_congruent_non_iid.yaml",
-        "manifest": ROOT / "fedgate_full" / "artifacts_s3_non_congruent_non_iid" / "splits" / "splits_manifest.json",
-        "report": ROOT / "fedgate_full" / "artifacts_s3_non_congruent_non_iid" / "splits" / "splits_report.json",
+        "manifest": ROOT / "fedgate_full" / "artifacts" / "s3_non_congruent_non_iid" / "splits" / "splits_manifest.json",
+        "report": ROOT / "fedgate_full" / "artifacts" / "s3_non_congruent_non_iid" / "splits" / "splits_report.json",
     },
 ]
 

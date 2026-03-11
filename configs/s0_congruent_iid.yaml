@@ -1,7 +1,7 @@
 experiment: "fedgate_full_s0"
 
 paths:
-  artifacts_root: "../artifacts_s0_iid"
+  artifacts_root: "../artifacts/s0_iid"
   results_root: "../results"
 
 data:
@@ -27,7 +27,7 @@ data:
   mri_shape: [96, 96, 96]
   mri_cache:
     enabled: true
-    dir: "../artifacts_s0_iid/mri_cache"
+    dir: "../artifacts/s0_iid/mri_cache"
 
 seeds: [7, 11, 17]
 pretrain_seed: 7
