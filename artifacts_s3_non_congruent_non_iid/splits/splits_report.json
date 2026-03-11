@@ -1,0 +1,45 @@
+{
+  "checked_at_utc": "2026-03-03T09:34:17+00:00",
+  "manifest": "/home/mathisd/Documents/Umons/Th\u00e8se/FEDGATE_FINAL/fedgate_full/artifacts_s3_non_congruent_non_iid/splits/splits_manifest.json",
+  "ok": true,
+  "errors": [],
+  "warnings": [],
+  "seed_reports": {
+    "7": {
+      "num_clients": 10,
+      "size_min": 159,
+      "size_max": 1363,
+      "size_gap": 1204,
+      "size_gap_tolerance": 4987,
+      "max_label_ratio_deviation": 0.799679165831161,
+      "label_tolerance": 1.0,
+      "num_global_train": 4483,
+      "num_global_val": 504,
+      "num_global_test": 1247
+    },
+    "11": {
+      "num_clients": 10,
+      "size_min": 180,
+      "size_max": 859,
+      "size_gap": 679,
+      "size_gap_tolerance": 4987,
+      "max_label_ratio_deviation": 0.799679165831161,
+      "label_tolerance": 1.0,
+      "num_global_train": 4485,
+      "num_global_val": 502,
+      "num_global_test": 1247
+    },
+    "17": {
+      "num_clients": 10,
+      "size_min": 178,
+      "size_max": 1424,
+      "size_gap": 1246,
+      "size_gap_tolerance": 4987,
+      "max_label_ratio_deviation": 0.799679165831161,
+      "label_tolerance": 1.0,
+      "num_global_train": 4484,
+      "num_global_val": 503,
+      "num_global_test": 1247
+    }
+  }
+}

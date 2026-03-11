@@ -1,0 +1,12 @@
+{
+  "method": "fedavg_mean",
+  "scenario": "FR_S0_congruent_iid",
+  "seed": 17,
+  "loss": 0.26016387090672466,
+  "auroc": 0.9285315947843531,
+  "auprc": 0.7962625631152834,
+  "acc": 0.8877305533279871,
+  "f1": 0.7131147540983607,
+  "threshold": 0.37999999999999995,
+  "is_personalized": false
+}

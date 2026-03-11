@@ -1,0 +1,15 @@
+\begin{table}[t]
+\centering
+\caption{Final metric deltas (FedGate minus FedAvg).}
+\label{tab:paper_delta_final}
+\begin{tabular}{lccccc}
+\toprule
+Scenario & Delta AUPRC (FG-FA) & Delta AUROC (FG-FA) & Delta F1 (FG-FA) & Delta Accuracy (FG-FA) & Delta Loss (FG-FA) \\
+\midrule
+Congruent + IID & -0.002 & -0.004 & -0.016 & -0.009 & +0.006 \\
+Congruent + non-IID & +0.044 & +0.019 & +0.454 & +0.055 & -1.693 \\
+Non-congruent + IID & +0.020 & -0.009 & -0.071 & -0.202 & -0.000 \\
+Non-congruent + non-IID & +0.090 & +0.101 & +0.048 & -0.020 & +0.022 \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,0 +1,20 @@
+\begin{table}[t]
+\centering
+\caption{Final metrics across scenarios.}
+\label{tab:paper_final_metrics}
+\begin{tabular}{llcccc}
+\toprule
+Scenario & Method & AUPRC $\uparrow$ & AUROC $\uparrow$ & F1 $\uparrow$ & Accuracy $\uparrow$ \\
+\midrule
+Congruent + IID & Centralized & 0.820 +/- 0.014 & 0.934 +/- 0.006 & 0.652 +/- 0.071 & 0.888 +/- 0.013 \\
+Congruent + IID & FedAvg & 0.804 +/- 0.006 & 0.931 +/- 0.002 & 0.716 +/- 0.008 & 0.888 +/- 0.002 \\
+Congruent + IID & FedGate & 0.802 +/- 0.002 & 0.927 +/- 0.001 & 0.700 +/- 0.008 & 0.879 +/- 0.007 \\
+Congruent + non-IID & FedAvg & 0.725 +/- 0.024 & 0.899 +/- 0.015 & 0.228 +/- 0.323 & 0.823 +/- 0.033 \\
+Congruent + non-IID & FedGate & 0.769 +/- 0.021 & 0.917 +/- 0.009 & 0.682 +/- 0.018 & 0.877 +/- 0.009 \\
+Non-congruent + IID & FedAvg & 0.522 +/- 0.010 & 0.793 +/- 0.003 & 0.522 +/- 0.007 & 0.748 +/- 0.018 \\
+Non-congruent + IID & FedGate & 0.542 +/- 0.087 & 0.784 +/- 0.048 & 0.451 +/- 0.072 & 0.546 +/- 0.189 \\
+Non-congruent + non-IID & FedAvg & 0.315 +/- 0.098 & 0.635 +/- 0.137 & 0.396 +/- 0.084 & 0.594 +/- 0.211 \\
+Non-congruent + non-IID & FedGate & 0.405 +/- 0.043 & 0.736 +/- 0.016 & 0.443 +/- 0.001 & 0.574 +/- 0.019 \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,0 +1,13 @@
+{
+  "method": "ditto_concat_global",
+  "scenario": "FR_S0_congruent_iid",
+  "seed": 11,
+  "loss": 0.25708559680649445,
+  "auroc": 0.9307462387161484,
+  "auprc": 0.8126077320993815,
+  "acc": 0.8949478748997595,
+  "f1": 0.7133479212253829,
+  "threshold": 0.49999999999999994,
+  "is_personalized": false,
+  "variant": "global"
+}

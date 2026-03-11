@@ -1,0 +1,12 @@
+{
+  "method": "fedavg_concat",
+  "scenario": "FR_S1_congruent_non_iid",
+  "seed": 7,
+  "loss": 3.047113039059551,
+  "auroc": 0.8729588766298896,
+  "auprc": 0.6696831072461573,
+  "acc": 0.7995188452285485,
+  "f1": 0.0,
+  "threshold": 0.49999999999999994,
+  "is_personalized": false
+}

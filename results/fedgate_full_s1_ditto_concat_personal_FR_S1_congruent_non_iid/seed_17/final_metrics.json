@@ -1,0 +1,13 @@
+{
+  "method": "ditto_concat_personal",
+  "scenario": "FR_S1_congruent_non_iid",
+  "seed": 17,
+  "loss": 0.44801904029110756,
+  "auroc": 0.9169107321965898,
+  "auprc": 0.7753365929343827,
+  "acc": 0.859663191659984,
+  "f1": 0.6858168761220825,
+  "threshold": 0.37999999999999995,
+  "is_personalized": true,
+  "variant": "personal"
+}

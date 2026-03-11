@@ -1,0 +1,17 @@
+# Heavy local artifacts not needed for paper sharing
+artifacts_s0_iid/mri_cache/
+artifacts_s1_non_iid/mri_cache/
+artifacts_s2_non_congruent_iid/mri_cache/
+artifacts_s3_non_congruent_non_iid/mri_cache/
+
+# Local run logs
+logs/
+
+# Python/cache noise
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db

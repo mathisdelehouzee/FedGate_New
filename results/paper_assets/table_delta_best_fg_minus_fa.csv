@@ -1,0 +1,5 @@
+scenario_key,scenario,delta_auprc,delta_auroc,delta_f1,delta_acc,delta_loss
+S0,Congruent + IID,-0.003,-0.003,-0.011,-0.009,+0.005
+S1,Congruent + non-IID,+0.044,+0.019,+0.457,+0.055,-1.691
+S2,Non-congruent + IID,+0.050,+0.049,+0.019,-0.003,-0.007
+S3,Non-congruent + non-IID,+0.073,+0.088,+0.067,-0.019,-0.005
