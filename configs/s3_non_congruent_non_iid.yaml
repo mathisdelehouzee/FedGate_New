@@ -5,8 +5,8 @@ paths:
   results_root: "../results"
 
 data:
-  csv: "../../FedGate/cbms_repro/cbms_dataset.csv"
-  data_root: "../../FedGate/federated_multimodal_adni/data/MixedDB"
+  csv: "../data/cbms_dataset.csv"
+  data_root: "../data/MixedDB"
   feature_names:
     - AGE
     - PTGENDER

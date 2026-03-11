@@ -4,6 +4,14 @@ artifacts/s1_non_iid/mri_cache/
 artifacts/s2_non_congruent_iid/mri_cache/
 artifacts/s3_non_congruent_non_iid/mri_cache/
 
+# Heavy dataset payload now colocated under fedgate_full/data
+data/ADNIDenoise/
+data/output_final/
+data/MixedDB/*
+!data/MixedDB/DATASETS.md
+!data/MixedDB/explain_dataset.md
+!data/MixedDB/cbms.pdf
+
 # Local run logs
 logs/
 
