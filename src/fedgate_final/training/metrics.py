@@ -144,9 +144,16 @@ def mean_std_across_runs(rows: List[Dict[str, Any]], metric_keys: Iterable[str])
 
 
 def write_csv(path: Path, rows: List[Dict[str, Any]], fieldnames: List[str]) -> None:
+    resolved_fieldnames = list(fieldnames)
+    known = set(resolved_fieldnames)
+    for row in rows:
+        for key in row.keys():
+            if key not in known:
+                resolved_fieldnames.append(key)
+                known.add(key)
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer = csv.DictWriter(handle, fieldnames=resolved_fieldnames)
         writer.writeheader()
         for row in rows:
             writer.writerow(row)
