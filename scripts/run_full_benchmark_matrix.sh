@@ -18,6 +18,7 @@ GENERATE_SPLITS="${ROOT_DIR}/scripts/generate_scenario_splits.py"
 LOG_DIR="${LOG_DIR:-${ROOT_DIR}/logs/full_matrix_$(date +%Y%m%d_%H%M%S)}"
 DEVICE="${DEVICE:-cuda}"
 NUM_WORKERS="${NUM_WORKERS:-0}"
+PRECOMPUTE_WORKERS="${PRECOMPUTE_WORKERS:-0}"
 FED_BATCH_SIZE="${FED_BATCH_SIZE:-0}"
 CENTRAL_BATCH_SIZE="${CENTRAL_BATCH_SIZE:-0}"
 RUN_CENTRALIZED="${RUN_CENTRALIZED:-1}"
@@ -94,6 +95,9 @@ PY
   if [[ "${existing_count}" -lt "${row_count}" ]]; then
     local label="precompute_$(basename "${config_path}" .yaml)"
     local cmd=("${PYTHON}" -u "scripts/precompute_mri_cache.py" "--config" "${config_path}")
+    if [[ "${PRECOMPUTE_WORKERS}" != "0" ]]; then
+      cmd+=("--num-workers" "${PRECOMPUTE_WORKERS}")
+    fi
     if [[ "${LIMIT_ROWS}" != "0" ]]; then
       cmd+=("--limit-rows" "${LIMIT_ROWS}")
     fi
