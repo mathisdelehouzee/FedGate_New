@@ -32,6 +32,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--num-workers", type=int, default=-1, help="Override dataloader workers.")
     parser.add_argument("--limit-rows", type=int, default=-1, help="Limit rows for smoke tests.")
     parser.add_argument("--seeds", nargs="*", type=int, default=None, help="Override seeds.")
+    parser.add_argument("--no-resume", action="store_true", help="Force retraining even if fold checkpoints exist.")
     parser.add_argument("--dry-run", action="store_true", help="Print resolved config only.")
     return parser.parse_args()
 
@@ -62,7 +63,8 @@ def main() -> None:
         f"epochs={args.epochs or 'config'} batch_size={args.batch_size or 'config'} "
         f"folds={args.folds or 'config'} num_workers={args.num_workers if args.num_workers >= 0 else 'config'} "
         f"device={args.device or 'config'} seeds={args.seeds or 'config'} "
-        f"limit_rows={args.limit_rows if args.limit_rows >= 0 else 'config'}"
+        f"limit_rows={args.limit_rows if args.limit_rows >= 0 else 'config'} "
+        f"resume={'no' if args.no_resume else 'yes'}"
     )
     if args.dry_run:
         return
@@ -77,6 +79,7 @@ def main() -> None:
         folds_override=args.folds,
         num_workers_override=args.num_workers,
         limit_rows_override=args.limit_rows,
+        resume_existing=not args.no_resume,
     )
     print(f"[centralized] wrote {result['experiment_dir']}")
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import gc
 import json
 import random
 from pathlib import Path
@@ -102,6 +103,61 @@ def _evaluate(model: nn.Module, loader: DataLoader, device: torch.device, criter
     return compute_binary_metrics(np.asarray(y_true), np.asarray(y_prob), total_loss / max(1, total_examples))
 
 
+def _shutdown_loader(loader: DataLoader | None) -> None:
+    if loader is None:
+        return
+    iterator = getattr(loader, "_iterator", None)
+    if iterator is None:
+        return
+    shutdown = getattr(iterator, "_shutdown_workers", None)
+    if shutdown is not None:
+        shutdown()
+    loader._iterator = None
+
+
+def _build_model(
+    *,
+    model_cfg: Dict[str, Any],
+    num_features: int,
+    mri_shape: tuple[int, int, int],
+    hidden_dim: int,
+    dropout: float,
+    device: torch.device,
+) -> PaperFedAvgModel:
+    return PaperFedAvgModel(
+        num_features=num_features,
+        img_size=mri_shape,
+        patch_size=tuple(int(v) for v in model_cfg.get("patch_size", (16, 16, 16))),
+        mri_dim=int(model_cfg.get("mri_dim", 768)),
+        token_dim=int(model_cfg.get("token_dim", 64)),
+        projection_dim=hidden_dim,
+        attn_dim=hidden_dim,
+        vit_layers=int(model_cfg.get("vit_layers", 12)),
+        vit_heads=int(model_cfg.get("vit_heads", 12)),
+        tab_layers=int(model_cfg.get("tab_layers", 3)),
+        tab_heads=int(model_cfg.get("tab_heads", 4)),
+        dropout=dropout,
+    ).to(device)
+
+
+def _checkpoint_paths(checkpoints_dir: Path, seed: int, fold_idx: int) -> tuple[Path, Path, Path]:
+    stem = f"seed_{seed}_fold_{fold_idx}"
+    return (
+        checkpoints_dir / f"{stem}_best.pt",
+        checkpoints_dir / f"{stem}_final.pt",
+        checkpoints_dir / f"{stem}_result.json",
+    )
+
+
+def _load_existing_fold_result(result_path: Path) -> Dict[str, Any] | None:
+    if not result_path.exists():
+        return None
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        return None
+    return payload
+
+
 def run_centralized_experiment(
     *,
     config_path: Path,
@@ -113,6 +169,7 @@ def run_centralized_experiment(
     folds_override: int = 0,
     num_workers_override: int = -1,
     limit_rows_override: int = -1,
+    resume_existing: bool = True,
 ) -> Dict[str, Any]:
     cfg = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
     data_cfg = dict(cfg.get("data", {}))
@@ -249,111 +306,153 @@ def run_centralized_experiment(
                     prefetch_factor=prefetch_factor,
                 ),
             )
+            best_checkpoint_path, final_checkpoint_path, result_checkpoint_path = _checkpoint_paths(checkpoints_dir, seed, fold_idx)
 
-            model = PaperFedAvgModel(
-                num_features=len(train_rows[0].features),
-                img_size=mri_shape,
-                patch_size=tuple(int(v) for v in model_cfg.get("patch_size", (16, 16, 16))),
-                mri_dim=int(model_cfg.get("mri_dim", 768)),
-                token_dim=int(model_cfg.get("token_dim", 64)),
-                projection_dim=hidden_dim,
-                attn_dim=hidden_dim,
-                vit_layers=int(model_cfg.get("vit_layers", 12)),
-                vit_heads=int(model_cfg.get("vit_heads", 12)),
-                tab_layers=int(model_cfg.get("tab_layers", 3)),
-                tab_heads=int(model_cfg.get("tab_heads", 4)),
-                dropout=dropout,
-            ).to(device)
-            class_weights = _compute_class_weights([row.label for row in train_rows], device=device)
-            criterion = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=0.1)
-            optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
-            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs, eta_min=1e-7)
+            model: nn.Module | None = None
+            optimizer: torch.optim.Optimizer | None = None
+            scheduler: torch.optim.lr_scheduler.LRScheduler | None = None
+            criterion: nn.Module | None = None
+            try:
+                model = _build_model(
+                    model_cfg=model_cfg,
+                    num_features=len(train_rows[0].features),
+                    mri_shape=mri_shape,
+                    hidden_dim=hidden_dim,
+                    dropout=dropout,
+                    device=device,
+                )
+                class_weights = _compute_class_weights([row.label for row in train_rows], device=device)
+                criterion = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=0.1)
 
-            history: List[Dict[str, Any]] = []
-            best_val = float("-inf")
-            best_epoch = 0
-            best_state = copy.deepcopy(model.state_dict())
-            epochs_no_improve = 0
+                if resume_existing and final_checkpoint_path.exists():
+                    existing = _load_existing_fold_result(result_checkpoint_path) or {}
+                    state_dict = torch.load(final_checkpoint_path, map_location=device)
+                    model.load_state_dict(state_dict)
+                    test_metrics = _evaluate(model, test_loader, device, criterion)
+                    result = {
+                        "seed": seed,
+                        "fold": fold_idx,
+                        "best_epoch": existing.get("best_epoch"),
+                        "best_val_auprc": existing.get("best_val_auprc"),
+                        "test": test_metrics,
+                        "history": existing.get("history", []),
+                        "resumed": True,
+                    }
+                    all_results.append(result)
+                    result_checkpoint_path.write_text(json.dumps(result, indent=2), encoding="utf-8")
+                    print(
+                        f"[centralized][seed={seed}][fold={fold_idx}] "
+                        f"skip existing checkpoint={final_checkpoint_path}"
+                    )
+                    continue
 
-            epoch_progress = make_progress(
-                range(1, epochs + 1),
-                total=epochs,
-                desc=f"centralized seed={seed} fold={fold_idx}",
-                leave=True,
-            )
-            for epoch in epoch_progress:
-                model.train()
-                total_loss = 0.0
-                total_examples = 0
-                y_true: List[int] = []
-                y_prob: List[float] = []
-                if epoch <= warmup_epochs:
-                    warmup_scale = epoch / max(1, warmup_epochs)
-                    for group in optimizer.param_groups:
-                        group["lr"] = lr * warmup_scale
-                for raw_batch in train_loader:
-                    batch = _move_batch(raw_batch, device)
-                    optimizer.zero_grad()
-                    logits = model(batch["mri"], batch["tabular"], batch["mri_mask"], batch["tab_mask"])
-                    loss = criterion(logits, batch["label"])
-                    loss.backward()
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-                    optimizer.step()
-                    probs = torch.softmax(logits, dim=1)[:, 1].detach().cpu().numpy()
-                    y_true.extend(batch["label"].detach().cpu().numpy().tolist())
-                    y_prob.extend(probs.tolist())
-                    total_examples += int(batch["label"].size(0))
-                    total_loss += float(loss.item()) * int(batch["label"].size(0))
-                if epoch > warmup_epochs:
-                    scheduler.step()
+                optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
+                scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs, eta_min=1e-7)
 
-                train_metrics = compute_binary_metrics(np.asarray(y_true), np.asarray(y_prob), total_loss / max(1, total_examples))
-                val_metrics = _evaluate(model, val_loader, device, criterion)
+                history: List[Dict[str, Any]] = []
+                best_val = float("-inf")
+                best_epoch = 0
+                best_state = copy.deepcopy(model.state_dict())
+                epochs_no_improve = 0
+
+                epoch_progress = make_progress(
+                    range(1, epochs + 1),
+                    total=epochs,
+                    desc=f"centralized seed={seed} fold={fold_idx}",
+                    leave=True,
+                )
+                try:
+                    for epoch in epoch_progress:
+                        model.train()
+                        total_loss = 0.0
+                        total_examples = 0
+                        y_true: List[int] = []
+                        y_prob: List[float] = []
+                        if epoch <= warmup_epochs:
+                            warmup_scale = epoch / max(1, warmup_epochs)
+                            for group in optimizer.param_groups:
+                                group["lr"] = lr * warmup_scale
+                        for raw_batch in train_loader:
+                            batch = _move_batch(raw_batch, device)
+                            optimizer.zero_grad()
+                            logits = model(batch["mri"], batch["tabular"], batch["mri_mask"], batch["tab_mask"])
+                            loss = criterion(logits, batch["label"])
+                            loss.backward()
+                            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                            optimizer.step()
+                            probs = torch.softmax(logits, dim=1)[:, 1].detach().cpu().numpy()
+                            y_true.extend(batch["label"].detach().cpu().numpy().tolist())
+                            y_prob.extend(probs.tolist())
+                            total_examples += int(batch["label"].size(0))
+                            total_loss += float(loss.item()) * int(batch["label"].size(0))
+                        if epoch > warmup_epochs:
+                            scheduler.step()
+
+                        train_metrics = compute_binary_metrics(np.asarray(y_true), np.asarray(y_prob), total_loss / max(1, total_examples))
+                        val_metrics = _evaluate(model, val_loader, device, criterion)
+                        test_metrics = _evaluate(model, test_loader, device, criterion)
+                        history.append({"epoch": epoch, "train": train_metrics, "val": val_metrics, "test": test_metrics})
+                        epoch_progress.set_postfix(
+                            train_acc=f"{train_metrics['acc']:.3f}",
+                            val_acc=f"{val_metrics['acc']:.3f}",
+                            test_acc=f"{test_metrics['acc']:.3f}",
+                            train_loss=f"{train_metrics['loss']:.3f}",
+                            val_loss=f"{val_metrics['loss']:.3f}",
+                            test_loss=f"{test_metrics['loss']:.3f}",
+                        )
+                        progress_write(
+                            epoch_progress,
+                            (
+                                f"[centralized][seed={seed}][fold={fold_idx}][epoch={epoch}/{epochs}] "
+                                f"loss tr/va/te={train_metrics['loss']:.4f}/{val_metrics['loss']:.4f}/{test_metrics['loss']:.4f} "
+                                f"acc tr/va/te={train_metrics['acc']:.4f}/{val_metrics['acc']:.4f}/{test_metrics['acc']:.4f}"
+                            ),
+                        )
+
+                        if val_metrics["auprc"] > best_val:
+                            best_val = val_metrics["auprc"]
+                            best_epoch = epoch
+                            best_state = copy.deepcopy(model.state_dict())
+                            epochs_no_improve = 0
+                            torch.save(best_state, best_checkpoint_path)
+                        else:
+                            if epoch >= min_epochs:
+                                epochs_no_improve += 1
+                        if epoch >= min_epochs and epochs_no_improve >= patience:
+                            break
+                finally:
+                    epoch_progress.close()
+
+                model.load_state_dict(best_state)
+                torch.save(model.state_dict(), final_checkpoint_path)
                 test_metrics = _evaluate(model, test_loader, device, criterion)
-                history.append({"epoch": epoch, "train": train_metrics, "val": val_metrics, "test": test_metrics})
-                epoch_progress.set_postfix(
-                    train_acc=f"{train_metrics['acc']:.3f}",
-                    val_acc=f"{val_metrics['acc']:.3f}",
-                    test_acc=f"{test_metrics['acc']:.3f}",
-                    train_loss=f"{train_metrics['loss']:.3f}",
-                    val_loss=f"{val_metrics['loss']:.3f}",
-                    test_loss=f"{test_metrics['loss']:.3f}",
-                )
-                progress_write(
-                    epoch_progress,
-                    (
-                        f"[centralized][seed={seed}][fold={fold_idx}][epoch={epoch}/{epochs}] "
-                        f"loss tr/va/te={train_metrics['loss']:.4f}/{val_metrics['loss']:.4f}/{test_metrics['loss']:.4f} "
-                        f"acc tr/va/te={train_metrics['acc']:.4f}/{val_metrics['acc']:.4f}/{test_metrics['acc']:.4f}"
-                    ),
-                )
-
-                if val_metrics["auprc"] > best_val:
-                    best_val = val_metrics["auprc"]
-                    best_epoch = epoch
-                    best_state = copy.deepcopy(model.state_dict())
-                    epochs_no_improve = 0
-                    torch.save(best_state, checkpoints_dir / f"seed_{seed}_fold_{fold_idx}_best.pt")
-                else:
-                    if epoch >= min_epochs:
-                        epochs_no_improve += 1
-                if epoch >= min_epochs and epochs_no_improve >= patience:
-                    break
-            epoch_progress.close()
-
-            model.load_state_dict(best_state)
-            torch.save(model.state_dict(), checkpoints_dir / f"seed_{seed}_fold_{fold_idx}_final.pt")
-            test_metrics = _evaluate(model, test_loader, device, criterion)
-            all_results.append(
-                {
+                result = {
                     "seed": seed,
                     "fold": fold_idx,
                     "best_epoch": best_epoch,
                     "best_val_auprc": best_val,
                     "test": test_metrics,
                     "history": history,
+                    "resumed": False,
                 }
-            )
+                all_results.append(result)
+                result_checkpoint_path.write_text(json.dumps(result, indent=2), encoding="utf-8")
+            finally:
+                _shutdown_loader(train_loader)
+                _shutdown_loader(val_loader)
+                _shutdown_loader(test_loader)
+                del train_loader, val_loader, test_loader, train_ds, val_ds, test_ds
+                if model is not None:
+                    del model
+                if optimizer is not None:
+                    del optimizer
+                if scheduler is not None:
+                    del scheduler
+                if criterion is not None:
+                    del criterion
+                gc.collect()
+                if device.type == "cuda":
+                    torch.cuda.empty_cache()
 
     raw_results_path = experiment_dir / "raw_results.json"
     raw_results_path.write_text(json.dumps(all_results, indent=2), encoding="utf-8")
